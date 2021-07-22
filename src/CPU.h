@@ -7,6 +7,15 @@ namespace GameBoyEmu
 
 struct MMU;
 
+struct FlagRegister
+{
+    bool Zero : 1;
+    bool N : 1; // Add/sub flags (BCD)
+    bool H : 1; // Half carry flag (BCD)
+    bool C : 1; // Carry flag
+    bool UNUSED : 4; // Unused, always zero
+};
+
 struct Registers
 {
     union 
@@ -14,7 +23,7 @@ struct Registers
         uint16 af;
         struct
         {
-            uint8 f; // Flags register.
+            FlagRegister f;
             uint8 a;
         };
     };
@@ -52,7 +61,14 @@ struct Registers
 class CPU
 {
 public:
-    CPU(MMU& memory);
+    CPU(MMU& mmu);
+
+private:
+    void OpcodeLD(uint8& to, uint8 from);
+    void OpcodeLD(uint8& to, Address address);
+    void OpcodeLD(uint16& to, uint16 from);
+    void OpcodeLD(uint16& to, Address address);
+    void OpcodeLD(Address address, uint8 from);
 
 private:
     MMU& memory;

@@ -10,13 +10,13 @@ MMU& MMU::GetMMU()
 }
 
 MMU::MMU()
-    : isBooting(&memory[0xFF50])
+    : isBooted(&memory[0xFF50])
 {
 }
 
 uint8 MMU::ReadByte(uint16 address)
 {
-    if (*isBooting == 0 && address < 0x0100)
+    if (*isBooted == 0 && address < 0x0100)
     {
         return bios[address];
     }
@@ -33,7 +33,7 @@ uint8 MMU::ReadByte(uint16 address)
 
 void MMU::WriteByte(uint16 address, uint8 value)
 {
-    if (*isBooting == 0 && address < 0x0100)
+    if (*isBooted == 0 && address < 0x0100)
     {
         return; // can't write into the BootROM
     }
@@ -51,7 +51,7 @@ void MMU::WriteByte(uint16 address, uint8 value)
 
 uint16 MMU::ReadWord(uint16 address)
 {
-    if (*isBooting == 0 && address < 0x0100)
+    if (*isBooted == 0 && address < 0x0100)
     {
         return (uint16)bios[address] << 8u | bios[address + 1];
     }
@@ -67,7 +67,7 @@ uint16 MMU::ReadWord(uint16 address)
 
 void MMU::WriteWord(uint16 address, uint16 value)
 {
-    if (*isBooting == 0 && address < 0x0100)
+    if (*isBooted == 0 && address < 0x0100)
     {
         bios[address] = (value & 0xFF00) >> 8u;
         bios[address + 1] = value & 0x00FF;
