@@ -14,7 +14,7 @@ MMU::MMU()
 {
 }
 
-uint8 MMU::ReadByte(uint16 address)
+uint8 MMU::ReadByte(Address address)
 {
     if (*isBooted == 0 && address < 0x0100)
     {
@@ -31,7 +31,7 @@ uint8 MMU::ReadByte(uint16 address)
     }
 }
 
-void MMU::WriteByte(uint16 address, uint8 value)
+void MMU::WriteByte(Address address, uint8 value)
 {
     if (*isBooted == 0 && address < 0x0100)
     {
@@ -49,7 +49,7 @@ void MMU::WriteByte(uint16 address, uint8 value)
     }
 }
 
-uint16 MMU::ReadWord(uint16 address)
+uint16 MMU::ReadWord(Address address)
 {
     if (*isBooted == 0 && address < 0x0100)
     {
@@ -65,7 +65,7 @@ uint16 MMU::ReadWord(uint16 address)
     return (uint16)memory[finalAddress] << 8u | memory[finalAddress + 1];
 }
 
-void MMU::WriteWord(uint16 address, uint16 value)
+void MMU::WriteWord(Address address, uint16 value)
 {
     if (*isBooted == 0 && address < 0x0100)
     {

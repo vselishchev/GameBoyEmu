@@ -10,11 +10,11 @@ class MMU
 public:
     static MMU& GetMMU();
 
-    uint8 ReadByte(uint16 address);
-    void WriteByte(uint16 address, uint8 value);
+    uint8 ReadByte(Address address);
+    void WriteByte(Address address, uint8 value);
 
-    uint16 ReadWord(uint16 address);
-    void WriteWord(uint16 address, uint16 value);
+    uint16 ReadWord(Address address);
+    void WriteWord(Address address, uint16 value);
 
 private:
     MMU();

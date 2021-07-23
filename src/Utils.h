@@ -22,9 +22,10 @@ public:
     Address(uint16 addr) : address(addr) {}
 
     uint16 GetValue() const { return address; }
+    operator uint16() { return address; }
 
 private:
     uint16 address;
-}
+};
 
 }
