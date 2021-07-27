@@ -5,6 +5,8 @@ namespace GameBoyEmu
 
 using uint8 = unsigned char;
 using uint16 = unsigned short;
+using int8 = signed char;
+using int16 = signed short;
 
 constexpr uint16 BankSize = 0x4000;
 constexpr uint16 VideoRAMSize = 0x2000;
@@ -27,5 +29,7 @@ public:
 private:
     uint16 address;
 };
+
+#define ISBITSET(value, bit) ((value >> bit) & 0x1)
 
 }
