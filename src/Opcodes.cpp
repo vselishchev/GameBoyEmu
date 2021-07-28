@@ -11,24 +11,30 @@ void CPU::STOP()
     Tick();
 }
 
+void CPU::HALT()
+{
+    isHalted = true;
+    Tick();
+}
+
 void CPU::LoadRegData16(uint16& reg)
 {
-    const uint16 data = memory.ReadWord(registers.pc); // read immediate word
-    registers.pc += 2;
-    
+    const uint16 data = GetWordFromPC();
     LD(reg, data);
 }
 
 void CPU::LoadRegData8(uint8& reg)
 {
-    const uint8 data = memory.ReadByte(registers.pc++); // read immediate byte
+    const uint8 data = GetByteFromPC();
     LD(reg, data);
+    Tick(); // 2 Ticks in total.
 }
 
-void CPU::LoadAddrRegA(Address address)
+void CPU::LoadAddrData8(Address address)
 {
-    ++registers.pc;
-    LD(address, registers.a);
+    const uint8 data = GetByteFromPC();
+    LD(address, data);
+    Tick(); // 3 ticks in total.
 }
 
 void CPU::LoadAddrSP()
@@ -49,7 +55,7 @@ void CPU::CBOpcodeFunc()
 void CPU::LD(uint8& to, uint8 from)
 {
     to = from;
-    Tick(2);
+    Tick();
 }
 
 void CPU::LD(uint16& to, uint16 from)
@@ -100,7 +106,10 @@ void CPU::INC(uint16& value)
 
 void CPU::INC(Address address)
 {
-
+    uint8 value = memory.ReadByte(address);
+    INC(value);
+    memory.WriteByte(address, value);
+    Tick(2); // 3 ticks in total.
 }
 
 void CPU::DEC(uint8& value)
@@ -121,7 +130,10 @@ void CPU::DEC(uint16& value)
 
 void CPU::DEC(Address address)
 {
-
+    uint8 value = memory.ReadByte(address);
+    DEC(value);
+    memory.WriteByte(address, value);
+    Tick(2); // 3 ticks in total.
 }
 
 void CPU::ADD(uint8& to, uint8 from)
@@ -238,6 +250,31 @@ void CPU::DAA()
 
     registers.a = reg;
     Tick();
+}
+
+void CPU::CPL()
+{
+    registers.a = ~registers.a;
+    Tick();
+
+    registers.f.N = 1;
+    registers.f.H = 1;
+}
+
+void CPU::SCF()
+{
+    registers.f.C = 1;
+    Tick();
+    registers.f.N = 0;
+    registers.f.H = 0;
+}
+
+void CPU::CCF()
+{
+    registers.f.C ^= 1;
+    Tick();
+    registers.f.N = 0;
+    registers.f.H = 0;
 }
 
 }

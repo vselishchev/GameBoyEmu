@@ -80,7 +80,7 @@ private:
     // Opcodes
     void LoadRegData16(uint16& reg); // Load word data into the word register.
     void LoadRegData8(uint8& reg); // Load byte data into the byte register.
-    void LoadAddrRegA(Address address); // Load A (accumulator) register into the address stored in the word register.
+    void LoadAddrData8(Address address); // Load byte data into the addressed memory
     void LoadAddrSP(); // Load Stack Pointer into the address
     //void LoadAAddrReg(Address address); // Load value from address stored in register to register A.
 
@@ -90,6 +90,7 @@ private:
     void NOP() { Tick();} // Takes CPU cycles.
     void None() {} // Called on invalid instruction.
     void STOP();
+    void HALT();
 
     // Load
     void LD(uint8& to, uint8 from);
@@ -122,11 +123,15 @@ private:
     void JR(bool flag); // Relative conditional jump to PC + signed data.
 
     void DAA(); // Decimal adjust A;
+    void CPL(); // Coplement A (A = ~A)
+    void SCF(); // Set Carry to 1;
+    void CCF(); // Set Carry to carry xor 1;
 
 private:
     MMU& memory;
     Registers registers;
 
+    bool isHalted = false;
     // Keep them the last ones, so the other members are initialized before the tables.
     using OpcodeFunc = void(*)(CPU&);
     OpcodeFunc opcodesTable[0x100];
