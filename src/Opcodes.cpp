@@ -138,7 +138,23 @@ void CPU::DEC(Address address)
 
 void CPU::ADD(uint8& to, uint8 from)
 {
+    const bool hasHalfCarry = ((to & 0x0F) + (from & 0x0F)) > 0x0F;
+    const bool lastBitBefore = ISBITSET(to, 7);
+    to += from;
+    const bool lastBitAfter = ISBITSET(to, 7);
 
+    registers.f.Z = to == 0;
+    registers.f.N = 0;
+    registers.f.H = hasHalfCarry;
+    registers.f.C = lastBitBefore && !lastBitAfter;
+    Tick();
+}
+
+void CPU::ADD(uint8& to, Address address)
+{
+    const uint8 data = memory.ReadByte(address);
+    ADD(to, data);
+    Tick(); // 2 ticks in total.
 }
 
 void CPU::ADD(uint16& to, uint16 from)
@@ -150,8 +166,50 @@ void CPU::ADD(uint16& to, uint16 from)
 
     registers.f.N = 0;
     registers.f.H = hasHalfCarry;
-    registers.f.C = lastBitBefore && (lastBitBefore != lastBitAfter);
+    registers.f.C = lastBitBefore && !lastBitAfter;
     Tick(2);
+}
+
+void CPU::ADC(uint8& to, uint8 from)
+{
+    ADD(to, from + registers.f.C);
+}
+
+void CPU::ADC(uint8& to, Address address)
+{
+    const uint8 data = memory.ReadByte(address);
+    ADD(to, data + registers.f.C);
+    Tick(); // 2 ticks in total.
+}
+
+void CPU::SUB(uint8 from)
+{
+    const uint8 oldValue = registers.a;
+    registers.a -= from;
+    registers.f.Z = registers.a == 0;
+    registers.f.N = 1;
+    registers.f.H = (oldValue & 0x0F) < (from & 0x0F);
+    registers.f.C = oldValue < from;
+    Tick();
+}
+
+void CPU::SUB(Address address)
+{
+    const uint8 data = memory.ReadByte(address);
+    SUB(data);
+    Tick(); // 2 ticks in total.
+}
+
+void CPU::SBC(uint8 from)
+{
+    SUB(from - registers.f.C);
+}
+
+void CPU::SBC(Address address)
+{
+    const uint8 data = memory.ReadByte(address);
+    SUB(data - registers.f.C);
+    Tick(); // 2 ticks in total.
 }
 
 void CPU::RLCA()

@@ -71,12 +71,6 @@ public:
 private:
     void Tick(uint8 ticks = 1) {} // TODO
 
-    // Flags modifiers
-    void SetZeroFlag(uint8 value);
-    void SetZeroFlag(uint16 value);
-    void SetCarryFlag(uint8 oldValue, uint8 newValue);
-    void SetCarryFlag(uint16 oldValue, uint16 newValue);
-
     // Opcodes
     void LoadRegData16(uint16& reg); // Load word data into the word register.
     void LoadRegData8(uint8& reg); // Load byte data into the byte register.
@@ -108,9 +102,16 @@ private:
     void DEC(uint16& value);
     void DEC(Address address);
 
-    // Add
+    // Add/Sub
     void ADD(uint8& to, uint8 from);
+    void ADD(uint8& to, Address address);
     void ADD(uint16& to, uint16 from);
+    void ADC(uint8& to, uint8 from);
+    void ADC(uint8& to, Address address);
+    void SUB(uint8 from);
+    void SUB(Address address);
+    void SBC(uint8 from);
+    void SBC(Address address);
 
     // Rotation
     void RLCA(); // Rotate A left
