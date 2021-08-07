@@ -46,6 +46,62 @@ void CPU::LoadAddrSP()
     Tick(); // 4 Ticks in total.
 }
 
+void CPU::AddData8()
+{
+    const uint8 data = GetByteFromPC();
+    ADD(registers.a, data);
+    Tick(); // 2 Ticks in total.
+}
+
+void CPU::SubData8()
+{
+    const uint8 data = GetByteFromPC();
+    SUB(data);
+    Tick(); // 2 Ticks in total.
+}
+
+void CPU::AndData8()
+{
+    const uint8 data = GetByteFromPC();
+    AND(data);
+    Tick(); // 2 Ticks in total.
+}
+
+void CPU::OrData8()
+{
+    const uint8 data = GetByteFromPC();
+    OR(data);
+    Tick(); // 2 Ticks in total.
+}
+
+void CPU::AdcData8()
+{
+    const uint8 data = GetByteFromPC();
+    ADC(registers.a, data);
+    Tick(); // 2 Ticks in total.
+}
+
+void CPU::SbcData8()
+{
+    const uint8 data = GetByteFromPC();
+    SBC(data);
+    Tick(); // 2 Ticks in total.
+}
+
+void CPU::XorData8()
+{
+    const uint8 data = GetByteFromPC();
+    XOR(data);
+    Tick(); // 2 Ticks in total.
+}
+
+void CPU::CpData8()
+{
+    const uint8 data = GetByteFromPC();
+    CP(data);
+    Tick(); // 2 Ticks in total.
+}
+
 void CPU::CBOpcodeFunc()
 { 
     const uint8 secondByte = memory.ReadByte(registers.pc++);
@@ -139,14 +195,13 @@ void CPU::DEC(Address address)
 void CPU::ADD(uint8& to, uint8 from)
 {
     const bool hasHalfCarry = ((to & 0x0F) + (from & 0x0F)) > 0x0F;
-    const bool lastBitBefore = ISBITSET(to, 7);
+    const bool hasCarry = ((to & 0xFF) + (from & 0xFF)) > 0xFF;
     to += from;
-    const bool lastBitAfter = ISBITSET(to, 7);
 
     registers.f.Z = to == 0;
     registers.f.N = 0;
     registers.f.H = hasHalfCarry;
-    registers.f.C = lastBitBefore && !lastBitAfter;
+    registers.f.C = hasCarry;
     Tick();
 }
 
@@ -160,13 +215,12 @@ void CPU::ADD(uint8& to, Address address)
 void CPU::ADD(uint16& to, uint16 from)
 {
     const bool hasHalfCarry = ((to & 0x0FFF) + (from & 0x0FFF)) > 0x0FFF;
-    const bool lastBitBefore = ISBITSET(to, 15);
+    const bool hasCarry = ((to & 0xFFFF) + (from & 0xFFFF)) > 0xFFFF;
     to += from;
-    const bool lastBitAfter = ISBITSET(to, 15);
 
     registers.f.N = 0;
     registers.f.H = hasHalfCarry;
-    registers.f.C = lastBitBefore && !lastBitAfter;
+    registers.f.C = hasCarry;
     Tick(2);
 }
 
@@ -212,6 +266,73 @@ void CPU::SBC(Address address)
     Tick(); // 2 ticks in total.
 }
 
+void CPU::AND(uint8 value)
+{
+    registers.a &= value;
+    registers.f.Z = registers.a == 0;
+    registers.f.N = 0;
+    registers.f.H = 1;
+    registers.f.C = 0;
+    Tick();
+}
+
+void CPU::AND(Address address)
+{
+    const uint8 data = memory.ReadByte(address);
+    AND(data);
+    Tick(); // 2 ticks in total.
+}
+
+void CPU::OR(uint8 value)
+{
+    registers.a |= value;
+    registers.f.Z = registers.a == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = 0;
+    Tick();
+}
+
+void CPU::OR(Address address)
+{
+    const uint8 data = memory.ReadByte(address);
+    OR(data);
+    Tick(); // 2 ticks in total.
+}
+
+void CPU::XOR(uint8 value)
+{
+    registers.a ^= value;
+    registers.f.Z = registers.a == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = 0;
+    Tick();
+}
+
+void CPU::XOR(Address address)
+{
+    const uint8 data = memory.ReadByte(address);
+    XOR(data);
+    Tick(); // 2 ticks in total.
+}
+
+void CPU::CP(uint8 value)
+{
+    registers.f.Z = registers.a == value;
+    registers.f.N = 1;
+    registers.f.H = (registers.a & 0x0F) < (value & 0x0F);
+    registers.f.C = registers.a < value;
+    Tick();
+}
+
+void CPU::CP(Address address)
+{
+    const uint8 data = memory.ReadByte(address);
+    CP(data);
+    Tick(); // 2 ticks in total.
+}
+
 void CPU::RLCA()
 {
     registers.f.C = registers.a & 0x80; // If 7th bit is 1, set carry flag to true.
@@ -254,9 +375,30 @@ void CPU::RRA()
     registers.f.C = newCarry;
 }
 
+void CPU::JP()
+{
+    const uint16 address = GetWordFromPC();
+    registers.pc = address;
+    Tick(4);
+}
+
+void CPU::JP(bool flag)
+{
+    if (flag)
+    {
+        JP();
+
+    }
+    else
+    {
+        registers.pc += 2;
+        Tick(3);
+    }
+}
+
 void CPU::JR()
 {
-    int8 relativeIndex = GetSignedByteFromPC();
+    const int8 relativeIndex = GetSignedByteFromPC();
     registers.pc += relativeIndex;
     Tick(3);
 }
@@ -274,6 +416,71 @@ void CPU::JR(bool flag)
     }
 }
 
+void CPU::CALL(Address address)
+{
+    PUSH(registers.pc);
+    registers.pc = address;
+    Tick(2);
+}
+
+void CPU::CALL()
+{
+    const uint16 newPC = GetWordFromPC();
+    CALL(newPC);
+    Tick(2);
+}
+
+void CPU::CALL(bool flag)
+{
+    if (flag)
+    {
+        CALL();
+    }
+    else
+    {
+        registers.pc += 2;
+        Tick(3);
+    }
+}
+
+void CPU::RET()
+{
+    POP(registers.pc);
+    Tick(1); // 4 ticks in total.
+}
+
+void CPU::RET(bool flag)
+{
+    if (flag)
+    {
+        RET();
+        Tick(); // 5 ticks in total.
+    }
+    else
+    {
+        Tick(2);
+    }
+}
+
+void CPU::RST(Address address)
+{
+    PUSH(registers.pc);
+    registers.pc = address;
+}
+
+void CPU::PUSH(uint16 value)
+{
+    registers.sp -= 2;
+    memory.WriteWord(registers.sp, value);
+    Tick(4);
+}
+
+void CPU::POP(uint16& to)
+{
+    to = memory.ReadWord(registers.sp);
+    registers.sp += 2;
+    Tick(3);
+}
 
 // Stole it from here: https://github.com/jgilchrist/gbemu/blob/master/src/cpu/opcodes.cc
 // Still need to investigate if it's doing right thing.

@@ -76,6 +76,14 @@ private:
     void LoadRegData8(uint8& reg); // Load byte data into the byte register.
     void LoadAddrData8(Address address); // Load byte data into the addressed memory
     void LoadAddrSP(); // Load Stack Pointer into the address
+    void AddData8();
+    void SubData8();
+    void AndData8();
+    void OrData8();
+    void AdcData8();
+    void SbcData8();
+    void XorData8();
+    void CpData8();
     //void LoadAAddrReg(Address address); // Load value from address stored in register to register A.
 
     void CBOpcodeFunc();
@@ -113,6 +121,16 @@ private:
     void SBC(uint8 from);
     void SBC(Address address);
 
+    // And/Or/Xor/Cp
+    void AND(uint8 value);
+    void AND(Address address);
+    void OR(uint8 value);
+    void OR(Address address);
+    void XOR(uint8 value);
+    void XOR(Address address);
+    void CP(uint8 value);
+    void CP(Address address);
+
     // Rotation
     void RLCA(); // Rotate A left
     void RLA(); // Rotate A left through carry
@@ -120,8 +138,19 @@ private:
     void RRA(); // Rotate A right through carry
 
     // Jumps
+    void JP(); // Jump to specified address.
+    void JP(bool flag); // Conditional flag to specified address.
     void JR(); // Relative jump to PC + signed data.
     void JR(bool flag); // Relative conditional jump to PC + signed data.
+    void CALL(); 
+    void CALL(bool flag);
+    void RET();
+    void RET(bool flag);
+    void RST(Address address);
+
+    // Stack ops
+    void PUSH(uint16 value);
+    void POP(uint16& to);
 
     void DAA(); // Decimal adjust A;
     void CPL(); // Coplement A (A = ~A)
