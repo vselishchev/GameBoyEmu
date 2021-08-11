@@ -5,6 +5,15 @@
 namespace GameBoyEmu
 {
 
+enum class Interrupts : uint8
+{
+    VBlank = 0x40,
+    LCDStat = 0x48,
+    Timer = 0x50,
+    Serial = 0x58,
+    Joypad = 0x60
+}
+
 struct MMU;
 
 struct FlagRegister
@@ -68,6 +77,14 @@ public:
     int8   GetSignedByteFromPC();
     int16  GetSignedWordFromPC();
 
+    void   SetInterruptEnabled(uint8 IE); // Sets the IE register to specific combination, overwriting existing combination.
+    void   AddInterruptEnabled(uint8 IE); // Adds provided IE bits to the IE register.
+    void   RemoveInterruptEnabled(uint8 IE); // Removes specific set of bits from the IE register.
+
+    void   SetInterruptFlag(uint8 IF); // Sets the IF register to specific combination, overwriting existing combination.
+    void   AddInterruptFlag(uint8 IF); // Adds provided IF bits to the IF register.
+    void   RemoveInterruptFlag(uint8 IF); // Removes specific set of bits from the IF register.
+
 private:
     void Tick(uint8 ticks = 1) {} // TODO
 
@@ -76,7 +93,12 @@ private:
     void LoadRegData8(uint8& reg); // Load byte data into the byte register.
     void LoadAddrData8(Address address); // Load byte data into the addressed memory
     void LoadAddrSP(); // Load Stack Pointer into the address
+    void LoadAddrReg(uint8 reg); // Load value of the byte register in to the addressed memory.
+    void LoadRegAddr(uint8& reg); // Load value from the addressed memory into the byte register.
+    void LoadHLSPSignedData8(); // Load the value (SP + data8) into the register HL.
+    void LoadSPHL();
     void AddData8();
+    void AddSPSignedData();
     void SubData8();
     void AndData8();
     void OrData8();
@@ -84,7 +106,8 @@ private:
     void SbcData8();
     void XorData8();
     void CpData8();
-    //void LoadAAddrReg(Address address); // Load value from address stored in register to register A.
+    void WriteToIOPortAddress();
+    void ReadFromIOPortAddress();
 
     void CBOpcodeFunc();
 
@@ -138,10 +161,12 @@ private:
     void RRA(); // Rotate A right through carry
 
     // Jumps
+    void JP(uint16 newPC);
     void JP(); // Jump to specified address.
     void JP(bool flag); // Conditional flag to specified address.
     void JR(); // Relative jump to PC + signed data.
     void JR(bool flag); // Relative conditional jump to PC + signed data.
+    void CALL(Address address);
     void CALL(); 
     void CALL(bool flag);
     void RET();
@@ -152,16 +177,25 @@ private:
     void PUSH(uint16 value);
     void POP(uint16& to);
 
+    // Interrupts
+    void RETI();
+    void EI();
+    void DI();
+
     void DAA(); // Decimal adjust A;
     void CPL(); // Coplement A (A = ~A)
     void SCF(); // Set Carry to 1;
     void CCF(); // Set Carry to carry xor 1;
 
 private:
-    MMU& memory;
+    MMU&      memory;
     Registers registers;
 
-    bool isHalted = false;
+    bool      isHalted = false;
+    uint8     ime = 0; // interrupt master enable flag.
+    uint8     interruptsEnable = 0;
+    uint8     interruptsFlag = 0;
+
     // Keep them the last ones, so the other members are initialized before the tables.
     using OpcodeFunc = void(*)(CPU&);
     OpcodeFunc opcodesTable[0x100];

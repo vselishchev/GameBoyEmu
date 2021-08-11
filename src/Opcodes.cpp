@@ -39,11 +39,44 @@ void CPU::LoadAddrData8(Address address)
 
 void CPU::LoadAddrSP()
 {
-    const Address addr = memory.ReadWord(registers.pc);
-    registers.pc += 2;
+    const Address addr = GetWordFromPC();
 
     LD(addr, registers.sp);
     Tick(); // 4 Ticks in total.
+}
+
+void CPU::LoadAddrReg(uint8 reg)
+{
+    const Address addr = GetWordFromPC();
+    LD(addr, reg);
+    Tick(2); // 4 Ticks in total.
+}
+
+void CPU::LoadRegAddr(uint8& reg)
+{
+    const Address addr = GetWordFromPC();
+    LD(reg, addr);
+    Tick(2); // 4 Ticks in total.
+}
+
+void CPU::LoadHLSPSignedData8()
+{
+    const int8 data = GetSignedByteFromPC();
+    const uint16 result = registers.sp + data;
+    
+    registers.f.Z = 0;
+    registers.f.N = 0;
+    registers.f.H = ((registers.sp ^ data ^ (result & 0xFFFF)) & 0x10) == 0x10;
+    registers.f.C = ((registers.sp ^ data ^ (result & 0xFFFF)) & 0x100) == 0x100;
+
+    registers.hl = result;
+    Tick(3);
+}
+
+void CPU::LoadSPHL()
+{
+    registers.sp = registers.hl;
+    Tick(2);
 }
 
 void CPU::AddData8()
@@ -51,6 +84,14 @@ void CPU::AddData8()
     const uint8 data = GetByteFromPC();
     ADD(registers.a, data);
     Tick(); // 2 Ticks in total.
+}
+
+void CPU::AddSPSignedData()
+{
+    const int8 data = GetSignedByteFromPC();
+    ADD(registers.sp, int16(data));
+    registers.f.Z = 0;
+    Tick(2); // 4 Ticks in total.
 }
 
 void CPU::SubData8()
@@ -100,6 +141,20 @@ void CPU::CpData8()
     const uint8 data = GetByteFromPC();
     CP(data);
     Tick(); // 2 Ticks in total.
+}
+
+void CPU::WriteToIOPortAddress()
+{
+    const uint8 data = GetByteFromPC();
+    LD(Address(0xFF00 + data), registers.a);
+    Tick(); // 3 Ticks in total.
+}
+
+void CPU::ReadFromIOPortAddress()
+{
+    const uint8 data = GetByteFromPC();
+    LD(registers.a, Address(0xFF00 + data));
+    Tick(); // 3 Ticks in total.
 }
 
 void CPU::CBOpcodeFunc()
@@ -375,11 +430,16 @@ void CPU::RRA()
     registers.f.C = newCarry;
 }
 
+void CPU::JP(uint16 newPC)
+{
+    registers.pc = newPC;
+    Tick(4);
+}
+
 void CPU::JP()
 {
     const uint16 address = GetWordFromPC();
-    registers.pc = address;
-    Tick(4);
+    JP(address);
 }
 
 void CPU::JP(bool flag)
@@ -420,14 +480,13 @@ void CPU::CALL(Address address)
 {
     PUSH(registers.pc);
     registers.pc = address;
-    Tick(2);
+    Tick(2); // 6 Ticks in total. 
 }
 
 void CPU::CALL()
 {
     const uint16 newPC = GetWordFromPC();
     CALL(newPC);
-    Tick(2);
 }
 
 void CPU::CALL(bool flag)
@@ -480,6 +539,24 @@ void CPU::POP(uint16& to)
     to = memory.ReadWord(registers.sp);
     registers.sp += 2;
     Tick(3);
+}
+
+void CPU::RETI()
+{
+    RET();
+    ime = true;
+}
+
+void CPU::EI()
+{
+    ime = true;
+    Tick();
+}
+
+void CPU::DI()
+{
+    ime = false;
+    Tick();
 }
 
 // Stole it from here: https://github.com/jgilchrist/gbemu/blob/master/src/cpu/opcodes.cc

@@ -224,6 +224,65 @@ CPU::CPU(MMU& mmu)
     /*0xC5*/ WrapFunc(cpu.PUSH(cpu.registers.bc)),
     /*0xC6*/ WrapFunc(cpu.AddData8()),
     /*0xC7*/ WrapFunc(cpu.RST(0x0)),
+    /*0xC8*/ WrapFunc(cpu.RET(cpu.registers.f.Z)),
+    /*0xC9*/ WrapFunc(cpu.RET()),
+    /*0xCA*/ WrapFunc(cpu.JP(cpu.registers.f.Z)),
+    /*0xCB*/ WrapFunc(cpu.CBOpcodeFunc()),
+    /*0xCC*/ WrapFunc(cpu.CALL(cpu.registers.f.Z)),
+    /*0xCD*/ WrapFunc(cpu.CALL()),
+    /*0xCE*/ WrapFunc(cpu.AdcData8()),
+    /*0xCF*/ WrapFunc(cpu.RST(0x8)),
+
+    /*0xD0*/ WrapFunc(cpu.RET(!cpu.registers.f.C)),
+    /*0xD1*/ WrapFunc(cpu.POP(cpu.registers.de)),
+    /*0xD2*/ WrapFunc(cpu.JP(!cpu.registers.f.C)),
+    /*0xD3*/ WrapFunc(cpu.None()),
+    /*0xC4*/ WrapFunc(cpu.CALL(!cpu.registers.f.C)),
+    /*0xD5*/ WrapFunc(cpu.PUSH(cpu.registers.de)),
+    /*0xD6*/ WrapFunc(cpu.SubData8()),
+    /*0xD7*/ WrapFunc(cpu.RST(0x10)),
+    /*0xD8*/ WrapFunc(cpu.RET(cpu.registers.f.C)),
+    /*0xD9*/ WrapFunc(cpu.RETI()),
+    /*0xDA*/ WrapFunc(cpu.JP(cpu.registers.f.C)),
+    /*0xDB*/ WrapFunc(cpu.None()),
+    /*0xDC*/ WrapFunc(cpu.CALL(cpu.registers.f.C)),
+    /*0xDD*/ WrapFunc(cpu.None()),
+    /*0xDE*/ WrapFunc(cpu.SbcData8()),
+    /*0xDF*/ WrapFunc(cpu.RST(0x18)),
+
+    /*0xE0*/ WrapFunc(cpu.WriteToIOPortAddress()),
+    /*0xE1*/ WrapFunc(cpu.POP(cpu.registers.hl)),
+    /*0xE2*/ WrapFunc(cpu.LD(Address(0xFF00 + cpu.registers.c), cpu.registers.a)),
+    /*0xE3*/ WrapFunc(cpu.None()),
+    /*0xE4*/ WrapFunc(cpu.None()),
+    /*0xE5*/ WrapFunc(cpu.PUSH(cpu.registers.hl)),
+    /*0xE6*/ WrapFunc(cpu.AndData8()),
+    /*0xE7*/ WrapFunc(cpu.RST(0x20)),
+    /*0xE8*/ WrapFunc(cpu.AddSPSignedData()),
+    /*0xE9*/ WrapFunc(cpu.JP(cpu.registers.hl)),
+    /*0xEA*/ WrapFunc(cpu.LoadAddrReg(cpu.registers.a)),
+    /*0xEB*/ WrapFunc(cpu.None()),
+    /*0xEC*/ WrapFunc(cpu.None()),
+    /*0xED*/ WrapFunc(cpu.None()),
+    /*0xEE*/ WrapFunc(cpu.XorData8()),
+    /*0xEF*/ WrapFunc(cpu.RST(0x28)),
+
+    /*0xF0*/ WrapFunc(cpu.ReadFromIOPortAddress()),
+    /*0xF1*/ WrapFunc(cpu.POP(cpu.registers.af)),
+    /*0xF2*/ WrapFunc(cpu.LD(cpu.registers.a, Address(0xFF00 + cpu.registers.c))),
+    /*0xF3*/ WrapFunc(cpu.DI()),
+    /*0xF4*/ WrapFunc(cpu.None()),
+    /*0xF5*/ WrapFunc(cpu.PUSH(cpu.registers.af)),
+    /*0xF6*/ WrapFunc(cpu.OrData8()),
+    /*0xF7*/ WrapFunc(cpu.RST(0x30)),
+    /*0xF8*/ WrapFunc(cpu.LoadHLSPSignedData8()),
+    /*0xF9*/ WrapFunc(cpu.LoadSPHL()),
+    /*0xFA*/ WrapFunc(cpu.LoadRegAddr(cpu.registers.a)),
+    /*0xFB*/ WrapFunc(cpu.EI()),
+    /*0xFC*/ WrapFunc(cpu.None()),
+    /*0xFD*/ WrapFunc(cpu.None()),
+    /*0xFE*/ WrapFunc(cpu.CpData8()),
+    /*0xFF*/ WrapFunc(cpu.RST(0x38))
     }
 {
     registers.af = 0x01B0;
@@ -254,6 +313,36 @@ int8 CPU::GetSignedByteFromPC()
 int16 CPU::GetSignedWordFromPC()
 {
     return static_cast<int16>(GetWordFromPC());
+}
+
+void CPU::SetInterruptEnabled(uint8 IE)
+{
+    interruptsEnable = IE;
+}
+
+void CPU::AddInterruptEnabled(uint8 IE)
+{
+    interruptsEnable |= IE;
+}
+
+void CPU::RemoveInterruptEnabled(uint8 IE)
+{
+    interruptsEnable &= ~IE;
+}
+
+void CPU::SetInterruptFlag(uint8 IF)
+{
+    interruptsFlag = IF;
+}
+
+void CPU::AddInterruptFlag(uint8 IF)
+{
+    interruptsFlag |= IF;
+}
+
+void CPU::RemoveInterruptFlag(uint8 IF)
+{
+    interruptsFlag &= ~IF;
 }
 
 }
