@@ -88,6 +88,8 @@ public:
 private:
     void Tick(uint8 ticks = 1) {} // TODO
 
+    void CBOpcodeFunc();
+
     // Opcodes
     void LoadRegData16(uint16& reg); // Load word data into the word register.
     void LoadRegData8(uint8& reg); // Load byte data into the byte register.
@@ -108,8 +110,6 @@ private:
     void CpData8();
     void WriteToIOPortAddress();
     void ReadFromIOPortAddress();
-
-    void CBOpcodeFunc();
 
     /// Instructions
     void NOP() { Tick();} // Takes CPU cycles.
@@ -154,12 +154,6 @@ private:
     void CP(uint8 value);
     void CP(Address address);
 
-    // Rotation
-    void RLCA(); // Rotate A left
-    void RLA(); // Rotate A left through carry
-    void RRCA(); // Rotate A right
-    void RRA(); // Rotate A right through carry
-
     // Jumps
     void JP(uint16 newPC);
     void JP(); // Jump to specified address.
@@ -182,10 +176,32 @@ private:
     void EI();
     void DI();
 
+    // Others
     void DAA(); // Decimal adjust A;
     void CPL(); // Coplement A (A = ~A)
     void SCF(); // Set Carry to 1;
     void CCF(); // Set Carry to carry xor 1;
+
+    // CB opcodes
+
+    // Rotation
+    void RLCA(); // Rotate A left
+    void RLA(); // Rotate A left through carry
+    void RRCA(); // Rotate A right
+    void RRA(); // Rotate A right through carry
+
+    void RLC(uint8& reg); // Rotate left
+    void RRC(uint8& reg); // Rotate right
+    void RL(uint8& reg); // Rotate left through carry
+    void RR(uint8& reg); // Rotate right through carry
+
+    void SLA(uint8& reg); // Shift left.
+    void SRA(uint8& reg); // Shift right.
+
+    void SWAP(uint8& reg);
+    void SRL(uint8& reg);
+
+    void ApplyToAddress(Address address, void(CPU::*pFunc)(uint8&), uint8 extraTicks = 1);
 
 private:
     MMU&      memory;
