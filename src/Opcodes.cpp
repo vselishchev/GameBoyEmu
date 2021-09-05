@@ -181,10 +181,6 @@ void CPU::LD(uint8& to, Address address)
     Tick(2);
 }
 
-void CPU::LD(uint16& to, Address address)
-{
-}
-
 void CPU::LD(Address address, uint8 from)
 {
     memory.WriteByte(address, from);
@@ -437,7 +433,7 @@ void CPU::JR(bool flag)
 void CPU::CALL(Address address)
 {
     PUSH(registers.pc);
-    registers.pc = address;
+    registers.pc = address.GetValue();
     Tick(2); // 6 Ticks in total. 
 }
 
@@ -482,7 +478,7 @@ void CPU::RET(bool flag)
 void CPU::RST(Address address)
 {
     PUSH(registers.pc);
-    registers.pc = address;
+    registers.pc = address.GetValue();
 }
 
 void CPU::PUSH(uint16 value)
@@ -704,10 +700,39 @@ void CPU::SRL(uint8& reg)
     Tick(2);
 }
 
+void CPU::BIT(uint8& reg, uint8 bit)
+{
+    registers.f.Z = ISBITSET(reg, bit);
+    registers.f.N = 0;
+    registers.f.H = 1;
+    Tick(2);
+}
+
+void CPU::SET(uint8& reg, uint8 bit)
+{
+    SETBIT(reg, bit);
+    Tick(2);
+}
+
+void CPU::RES(uint8& reg, uint8 bit)
+{
+    CLEARBIT(reg, bit);
+    Tick(2);
+}
+
 void CPU::ApplyToAddress(Address address, void(CPU::*pFunc)(uint8&), uint8 extraTicks)
 {
     uint8 data = memory.ReadByte(address);
     (this->*pFunc)(data);
+    memory.WriteByte(address, data);
+
+    Tick(extraTicks);
+}
+
+void CPU::ApplyToAddress(Address address, uint8 bit, void(CPU::*pFunc)(uint8&, uint8), uint8 extraTicks)
+{
+    uint8 data = memory.ReadByte(address);
+    (this->*pFunc)(data, bit);
     memory.WriteByte(address, data);
 
     Tick(extraTicks);

@@ -12,9 +12,9 @@ enum class Interrupts : uint8
     Timer = 0x50,
     Serial = 0x58,
     Joypad = 0x60
-}
+};
 
-struct MMU;
+class MMU;
 
 struct FlagRegister
 {
@@ -86,7 +86,7 @@ public:
     void   RemoveInterruptFlag(uint8 IF); // Removes specific set of bits from the IF register.
 
 private:
-    void Tick(uint8 ticks = 1) {} // TODO
+    void Tick(uint8 ticks = 1) { (void)ticks; } // TODO
 
     void CBOpcodeFunc();
 
@@ -121,7 +121,6 @@ private:
     void LD(uint8& to, uint8 from);
     void LD(uint16& to, uint16 from);
     void LD(uint8& to, Address address);
-    void LD(uint16& to, Address address);
     void LD(Address address, uint8 from);
     void LD(Address address, uint16 from);
 
@@ -201,8 +200,13 @@ private:
     void SWAP(uint8& reg);
     void SRL(uint8& reg);
 
-    void ApplyToAddress(Address address, void(CPU::*pFunc)(uint8&), uint8 extraTicks = 1);
+    void BIT(uint8& reg, uint8 bit);
+    void SET(uint8& reg, uint8 bit);
+    void RES(uint8& reg, uint8 bit);
 
+    void ApplyToAddress(Address address, void(CPU::*pFunc)(uint8&), uint8 extraTicks = 1);
+    void ApplyToAddress(Address address, uint8 bit, void(CPU::*pFunc)(uint8&, uint8), uint8 extraTicks);
+    
 private:
     MMU&      memory;
     Registers registers;
