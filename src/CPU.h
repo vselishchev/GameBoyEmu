@@ -12,9 +12,9 @@ enum class Interrupts : uint8
     Timer = 0x50,
     Serial = 0x58,
     Joypad = 0x60
-}
+};
 
-struct MMU;
+class MMU;
 
 struct FlagRegister
 {
@@ -86,7 +86,9 @@ public:
     void   RemoveInterruptFlag(uint8 IF); // Removes specific set of bits from the IF register.
 
 private:
-    void Tick(uint8 ticks = 1) {} // TODO
+    void Tick(uint8 ticks = 1) { (void)ticks; } // TODO
+
+    void CBOpcodeFunc();
 
     // Opcodes
     void LoadRegData16(uint16& reg); // Load word data into the word register.
@@ -109,8 +111,6 @@ private:
     void WriteToIOPortAddress();
     void ReadFromIOPortAddress();
 
-    void CBOpcodeFunc();
-
     /// Instructions
     void NOP() { Tick();} // Takes CPU cycles.
     void None() {} // Called on invalid instruction.
@@ -121,7 +121,6 @@ private:
     void LD(uint8& to, uint8 from);
     void LD(uint16& to, uint16 from);
     void LD(uint8& to, Address address);
-    void LD(uint16& to, Address address);
     void LD(Address address, uint8 from);
     void LD(Address address, uint16 from);
 
@@ -154,12 +153,6 @@ private:
     void CP(uint8 value);
     void CP(Address address);
 
-    // Rotation
-    void RLCA(); // Rotate A left
-    void RLA(); // Rotate A left through carry
-    void RRCA(); // Rotate A right
-    void RRA(); // Rotate A right through carry
-
     // Jumps
     void JP(uint16 newPC);
     void JP(); // Jump to specified address.
@@ -182,11 +175,38 @@ private:
     void EI();
     void DI();
 
+    // Others
     void DAA(); // Decimal adjust A;
     void CPL(); // Coplement A (A = ~A)
     void SCF(); // Set Carry to 1;
     void CCF(); // Set Carry to carry xor 1;
 
+    // CB opcodes
+
+    // Rotation
+    void RLCA(); // Rotate A left
+    void RLA(); // Rotate A left through carry
+    void RRCA(); // Rotate A right
+    void RRA(); // Rotate A right through carry
+
+    void RLC(uint8& reg); // Rotate left
+    void RRC(uint8& reg); // Rotate right
+    void RL(uint8& reg); // Rotate left through carry
+    void RR(uint8& reg); // Rotate right through carry
+
+    void SLA(uint8& reg); // Shift left.
+    void SRA(uint8& reg); // Shift right.
+
+    void SWAP(uint8& reg);
+    void SRL(uint8& reg);
+
+    void BIT(uint8& reg, uint8 bit);
+    void SET(uint8& reg, uint8 bit);
+    void RES(uint8& reg, uint8 bit);
+
+    void ApplyToAddress(Address address, void(CPU::*pFunc)(uint8&), uint8 extraTicks = 1);
+    void ApplyToAddress(Address address, uint8 bit, void(CPU::*pFunc)(uint8&, uint8), uint8 extraTicks);
+    
 private:
     MMU&      memory;
     Registers registers;

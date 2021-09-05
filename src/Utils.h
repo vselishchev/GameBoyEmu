@@ -31,5 +31,7 @@ private:
 };
 
 #define ISBITSET(value, bit) ((value >> bit) & 0x1)
+#define CLEARBIT(value, bit) (value &= ~(1 << bit))
+#define SETBIT(value, bit) (value |= (1 << bit))
 
 }

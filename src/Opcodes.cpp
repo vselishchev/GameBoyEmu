@@ -5,6 +5,12 @@
 namespace GameBoyEmu
 {
 
+void CPU::CBOpcodeFunc()
+{ 
+    const uint8 secondByte = memory.ReadByte(registers.pc++);
+    CBOpcodeTable[secondByte](*this);
+}
+
 void CPU::STOP()
 {
     ++registers.pc;
@@ -157,12 +163,6 @@ void CPU::ReadFromIOPortAddress()
     Tick(); // 3 Ticks in total.
 }
 
-void CPU::CBOpcodeFunc()
-{ 
-    const uint8 secondByte = memory.ReadByte(registers.pc++);
-    //(this->*CBOpcodeTable[secondByte])();
-}
-
 void CPU::LD(uint8& to, uint8 from)
 {
     to = from;
@@ -179,10 +179,6 @@ void CPU::LD(uint8& to, Address address)
 {
     to = memory.ReadByte(address);
     Tick(2);
-}
-
-void CPU::LD(uint16& to, Address address)
-{
 }
 
 void CPU::LD(Address address, uint8 from)
@@ -388,48 +384,6 @@ void CPU::CP(Address address)
     Tick(); // 2 ticks in total.
 }
 
-void CPU::RLCA()
-{
-    registers.f.C = registers.a & 0x80; // If 7th bit is 1, set carry flag to true.
-    registers.a = (registers.a << 1) | (registers.a >> 7);
-    Tick();
-    registers.f.Z = 0;
-    registers.f.N = 0;
-    registers.f.H = 0;
-}
-
-void CPU::RLA()
-{
-    const uint8 newCarry = registers.a & 0x80;
-    registers.a = (registers.a << 1) | registers.f.C;
-    Tick();
-    registers.f.Z = 0;
-    registers.f.N = 0;
-    registers.f.H = 0;
-    registers.f.C = newCarry;
-}
-
-void CPU::RRCA()
-{
-    registers.f.C = registers.a & 0x1; // If 0th bit is 1, set carry to true.
-    registers.a = (registers.a >> 1) | (registers.a << 7);
-    registers.f.Z = 0;
-    registers.f.N = 0;
-    registers.f.H = 0;
-    Tick();
-}
-
-void CPU::RRA()
-{
-    const uint8 newCarry = registers.a & 0x1;
-    registers.a = (registers.a >> 1) | (registers.f.C << 7);
-    Tick();
-    registers.f.Z = 0;
-    registers.f.N = 0;
-    registers.f.H = 0;
-    registers.f.C = newCarry;
-}
-
 void CPU::JP(uint16 newPC)
 {
     registers.pc = newPC;
@@ -479,7 +433,7 @@ void CPU::JR(bool flag)
 void CPU::CALL(Address address)
 {
     PUSH(registers.pc);
-    registers.pc = address;
+    registers.pc = address.GetValue();
     Tick(2); // 6 Ticks in total. 
 }
 
@@ -524,7 +478,7 @@ void CPU::RET(bool flag)
 void CPU::RST(Address address)
 {
     PUSH(registers.pc);
-    registers.pc = address;
+    registers.pc = address.GetValue();
 }
 
 void CPU::PUSH(uint16 value)
@@ -617,6 +571,171 @@ void CPU::CCF()
     Tick();
     registers.f.N = 0;
     registers.f.H = 0;
+}
+
+void CPU::RLCA()
+{
+    registers.f.C = registers.a & 0x80; // If 7th bit is 1, set carry flag to true.
+    registers.a = (registers.a << 1) | (registers.a >> 7);
+    Tick();
+    registers.f.Z = 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+}
+
+void CPU::RLA()
+{
+    const uint8 newCarry = registers.a & 0x80;
+    registers.a = (registers.a << 1) | registers.f.C;
+    Tick();
+    registers.f.Z = 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = newCarry;
+}
+
+void CPU::RRCA()
+{
+    registers.f.C = registers.a & 0x1; // If 0th bit is 1, set carry to true.
+    registers.a = (registers.a >> 1) | (registers.a << 7);
+    registers.f.Z = 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    Tick();
+}
+
+void CPU::RRA()
+{
+    const uint8 newCarry = registers.a & 0x1;
+    registers.a = (registers.a >> 1) | (registers.f.C << 7);
+    Tick();
+    registers.f.Z = 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = newCarry;
+}
+
+void CPU::RLC(uint8& reg)
+{
+    registers.f.C = reg & 0x80; // If 7th bit is 1, set carry flag to true.
+    reg = (reg << 1) | (reg >> 7);
+    registers.f.Z = reg == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    Tick(2);
+}
+
+void CPU::RRC(uint8& reg)
+{
+    registers.f.C = reg & 0x1; // If 0th bit is 1, set carry to true.
+    reg = (reg >> 1) | (reg << 7);
+    registers.f.Z = reg == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    Tick(2);
+}
+
+void CPU::RL(uint8& reg)
+{
+    const uint8 newCarry = reg & 0x80;
+    reg = (reg << 1) | registers.f.C;
+    registers.f.Z = reg == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = newCarry;
+    Tick(2);
+}
+
+void CPU::RR(uint8& reg)
+{
+    const uint8 newCarry = reg & 0x1;
+    reg = (reg >> 1) | (registers.f.C << 7);
+    registers.f.Z = reg == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = newCarry;
+    Tick(2);
+}
+
+void CPU::SLA(uint8& reg)
+{
+    const uint8 newCarry = reg & 0x80;
+    reg <<= 1;
+    registers.f.Z = reg == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = newCarry;
+    Tick(2);
+}
+
+void CPU::SRA(uint8& reg)
+{
+    const uint8 newCarry = reg & 0x1;
+    reg = (reg >> 1) | (reg & 0x80);
+    registers.f.Z = reg == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = newCarry;
+    Tick(2);
+}
+
+void CPU::SWAP(uint8& reg)
+{
+    reg = (reg >> 4) | (reg << 4);
+    registers.f.Z = reg == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = 0;
+    Tick(2);
+}
+
+void CPU::SRL(uint8& reg)
+{
+    const uint8 newCarry = reg & 0x80;
+    reg >>= 1;
+    registers.f.Z = reg == 0;
+    registers.f.N = 0;
+    registers.f.H = 0;
+    registers.f.C = newCarry;
+    Tick(2);
+}
+
+void CPU::BIT(uint8& reg, uint8 bit)
+{
+    registers.f.Z = ISBITSET(reg, bit);
+    registers.f.N = 0;
+    registers.f.H = 1;
+    Tick(2);
+}
+
+void CPU::SET(uint8& reg, uint8 bit)
+{
+    SETBIT(reg, bit);
+    Tick(2);
+}
+
+void CPU::RES(uint8& reg, uint8 bit)
+{
+    CLEARBIT(reg, bit);
+    Tick(2);
+}
+
+void CPU::ApplyToAddress(Address address, void(CPU::*pFunc)(uint8&), uint8 extraTicks)
+{
+    uint8 data = memory.ReadByte(address);
+    (this->*pFunc)(data);
+    memory.WriteByte(address, data);
+
+    Tick(extraTicks);
+}
+
+void CPU::ApplyToAddress(Address address, uint8 bit, void(CPU::*pFunc)(uint8&, uint8), uint8 extraTicks)
+{
+    uint8 data = memory.ReadByte(address);
+    (this->*pFunc)(data, bit);
+    memory.WriteByte(address, data);
+
+    Tick(extraTicks);
 }
 
 }
